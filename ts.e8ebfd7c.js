@@ -429,24 +429,15 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 class App {
   constructor() {
-    this.draw();
+    this.elem = document.getElementById("app");
     this.prepareGame();
-  }
-
-  draw() {
-    const canvas = document.createElement("canvas");
-    canvas.setAttribute("width", "500");
-    canvas.setAttribute("height", "750");
-    const app = document.getElementById("app");
-    app.appendChild(canvas);
   }
 
   prepareGame() {
     this.game = null;
     document.addEventListener("keypress", () => {
       if (this.game) return;
-      this.game = new _game.default();
-      this.game.start();
+      this.game = new _game.default(this.elem);
     });
   }
 
@@ -462,13 +453,17 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-class Game {
-  constructor() {// document.createElement();
-  }
+var _grid = _interopRequireDefault(require("./grid"));
 
-  start() {
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+class Game {
+  constructor(parentElem) {
+    this.elem = document.createElement("div");
+    parentElem.appendChild(this.elem);
+    this.grid = new _grid.default(this.elem);
     setInterval(() => {
-      console.log("playing game...");
+      this.grid.tick();
     }, 500);
   }
 
@@ -476,6 +471,186 @@ class Game {
 
 var _default = Game;
 exports.default = _default;
+},{"./grid":"ba3e94b73492c1639d51f8611b895965"}],"ba3e94b73492c1639d51f8611b895965":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _cell = _interopRequireDefault(require("./cell"));
+
+var _tetrimino = _interopRequireDefault(require("./tetrimino"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+class Grid {
+  constructor(parentElem) {
+    this.elem = document.createElement("ul");
+    parentElem.appendChild(this.elem);
+    this.setInitialStyles();
+    this.setCells();
+    this.currentTetrimino = new _tetrimino.default();
+    this.draw();
+  }
+
+  setCells() {
+    this.cells = Array(Grid.HEIGHT).fill(null).map(() => Array(Grid.WIDTH).fill(null).map(() => new _cell.default(this.elem)));
+  }
+
+  setInitialStyles() {
+    this.elem.style.display = "grid";
+    this.elem.style.gridTemplateColumns = `repeat(${Grid.WIDTH}, 32px)`;
+    this.elem.style.gridTemplateRows = `repeat(${Grid.HEIGHT}, 32px)`;
+    this.elem.style.justifyItems = "center";
+    this.elem.style.alignItems = "center";
+  }
+
+  draw() {
+    this.cells.forEach(cellsRow => cellsRow.forEach(cell => cell.clear()));
+    this.currentTetrimino.occupiedAbsolutePositions().forEach(position => this.cells[Grid.HEIGHT - 1 - position.y][position.x].fill());
+  }
+
+  tick() {
+    this.currentTetrimino.moveDown();
+    this.draw();
+  }
+
+}
+
+_defineProperty(Grid, "HEIGHT", 20);
+
+_defineProperty(Grid, "WIDTH", 10);
+
+var _default = Grid;
+exports.default = _default;
+},{"./cell":"b70b289d34d20a81da4fb8dad7a40876","./tetrimino":"f75ed70044904b7f08eae709cbe41b61"}],"b70b289d34d20a81da4fb8dad7a40876":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+const FILLED_COLOR = "#000000";
+const EMPTY_COLOR = "#E0E0E0";
+
+class CellOuter {
+  constructor(parentElem) {
+    this.elem = document.createElement("li");
+    parentElem.appendChild(this.elem);
+    this.setInitialStyles();
+    this.inner = new CellInner(this.elem);
+  }
+
+  setInitialStyles() {
+    this.elem.style.listStyle = "none";
+    this.elem.style.width = "78%";
+    this.elem.style.height = "78%";
+    this.elem.style.border = "2px solid";
+    this.elem.style.display = "flex";
+    this.elem.style.justifyContent = "center";
+    this.elem.style.alignItems = "center";
+  }
+
+  fill() {
+    this.elem.style.borderColor = FILLED_COLOR;
+    this.inner.fill();
+  }
+
+  clear() {
+    this.elem.style.borderColor = EMPTY_COLOR;
+    this.inner.clear();
+  }
+
+}
+
+class CellInner {
+  constructor(parentElem) {
+    this.elem = document.createElement("div");
+    parentElem.appendChild(this.elem);
+    this.elem.style.width = "75%";
+    this.elem.style.height = "75%";
+    this.elem.style.backgroundColor = EMPTY_COLOR;
+  }
+
+  fill() {
+    this.elem.style.backgroundColor = FILLED_COLOR;
+  }
+
+  clear() {
+    this.elem.style.backgroundColor = EMPTY_COLOR;
+  }
+
+}
+
+var _default = CellOuter;
+exports.default = _default;
+},{}],"f75ed70044904b7f08eae709cbe41b61":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+var _position = require("./position");
+
+const tRelativePositions = [new _position.RelativePosition(0, 0), new _position.RelativePosition(-1, 0), new _position.RelativePosition(1, 0), new _position.RelativePosition(0, 1)];
+
+class Tetrimino {
+  constructor() {
+    this.centerPosition = new _position.AbsolutePosition(5, 15);
+    this.occupiedRelativePositions = tRelativePositions;
+  }
+
+  occupiedAbsolutePositions() {
+    return this.occupiedRelativePositions.map(relativePosition => this.centerPosition.getAbsolute(relativePosition));
+  }
+
+  moveDown() {
+    if (!this.canMoveDown()) return;
+    this.centerPosition.y -= 1;
+  }
+
+  canMoveDown() {
+    return this.occupiedAbsolutePositions().every(occupiedAbsolutePosition => 0 < occupiedAbsolutePosition.y);
+  }
+
+}
+
+var _default = Tetrimino;
+exports.default = _default;
+},{"./position":"471495f57cb7c4ce0f9427dac5bec78c"}],"471495f57cb7c4ce0f9427dac5bec78c":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.RelativePosition = exports.AbsolutePosition = void 0;
+
+class Position {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+}
+
+class AbsolutePosition extends Position {
+  getAbsolute(relativePosition) {
+    return new AbsolutePosition(this.x + relativePosition.x, this.y + relativePosition.y);
+  }
+
+}
+
+exports.AbsolutePosition = AbsolutePosition;
+
+class RelativePosition extends Position {}
+
+exports.RelativePosition = RelativePosition;
 },{}]},{},["d51b7545ee38d2d3f793c729451fb2f3","1b4b89b226e7f55d440fa57f9fc4860c"], null)
 
 //# sourceMappingURL=ts.e8ebfd7c.js.map
