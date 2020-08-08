@@ -1,21 +1,23 @@
 import Game from "./game";
 
 class App {
+  game: Game | null;
+
   constructor() {
-    this.#draw();
-    this.#prepareGame();
+    this.draw();
+    this.prepareGame();
   }
 
-  #draw() {
+  draw() {
     const canvas = document.createElement("canvas");
-    canvas.setAttribute("width", 500);
-    canvas.setAttribute("height", 750);
+    canvas.setAttribute("width", "500");
+    canvas.setAttribute("height", "750");
 
     const app = document.getElementById("app");
     app.appendChild(canvas);
   }
 
-  #prepareGame() {
+  prepareGame() {
     this.game = null;
     document.addEventListener("keypress", () => {
       if (this.game) return;
