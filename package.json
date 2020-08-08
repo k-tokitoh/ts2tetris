@@ -1,10 +1,10 @@
 {
-  "name": "js2tetris",
+  "name": "ts2tetris",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "parcel serve src/index.html",
-    "predeploy": "parcel build src/index.html --public-url /js2tetris/",
+    "predeploy": "parcel build src/index.html --public-url /ts2tetris/",
     "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
