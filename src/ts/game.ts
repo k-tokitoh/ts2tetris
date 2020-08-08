@@ -1,11 +1,17 @@
-class Game {
-  constructor() {
-    // document.createElement();
-  }
+import Grid from "./grid";
 
-  start() {
+class Game {
+  elem: HTMLElement;
+  grid: Grid;
+
+  constructor(parentElem) {
+    this.elem = document.createElement("div");
+    parentElem.appendChild(this.elem);
+
+    this.grid = new Grid(this.elem);
+
     setInterval(() => {
-      console.log("playing game...");
+      this.grid.tick();
     }, 500);
   }
 }
