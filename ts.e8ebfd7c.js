@@ -427,9 +427,12 @@ var _game = _interopRequireDefault(require("./game"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 class App {
   constructor() {
-    this.elem = document.getElementById("app");
+    _defineProperty(this, "elem", document.getElementById("app"));
+
     this.prepareGame();
   }
 
@@ -457,11 +460,15 @@ var _grid = _interopRequireDefault(require("./grid"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 class Game {
   constructor(parentElem) {
-    this.elem = document.createElement("div");
+    _defineProperty(this, "elem", document.createElement("div"));
+
+    _defineProperty(this, "grid", new _grid.default(this.elem));
+
     parentElem.appendChild(this.elem);
-    this.grid = new _grid.default(this.elem);
     setInterval(() => {
       this.grid.tick();
     }, 500);
@@ -489,24 +496,29 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 class Grid {
   constructor(parentElem) {
-    this.elem = document.createElement("ul");
+    _defineProperty(this, "elem", this.initialElem());
+
+    _defineProperty(this, "cells", this.initialCells());
+
+    _defineProperty(this, "currentTetrimino", new _tetrimino.default(Grid.WIDTH - 1));
+
     parentElem.appendChild(this.elem);
-    this.setInitialStyles();
-    this.setCells();
-    this.currentTetrimino = new _tetrimino.default();
     this.draw();
+    document.addEventListener("keydown", e => this.onKeyDown(e));
   }
 
-  setCells() {
-    this.cells = Array(Grid.HEIGHT).fill(null).map(() => Array(Grid.WIDTH).fill(null).map(() => new _cell.default(this.elem)));
+  initialElem() {
+    const elem = document.createElement("ul");
+    elem.style.display = "grid";
+    elem.style.gridTemplateColumns = `repeat(${Grid.WIDTH}, 32px)`;
+    elem.style.gridTemplateRows = `repeat(${Grid.HEIGHT}, 32px)`;
+    elem.style.justifyItems = "center";
+    elem.style.alignItems = "center";
+    return elem;
   }
 
-  setInitialStyles() {
-    this.elem.style.display = "grid";
-    this.elem.style.gridTemplateColumns = `repeat(${Grid.WIDTH}, 32px)`;
-    this.elem.style.gridTemplateRows = `repeat(${Grid.HEIGHT}, 32px)`;
-    this.elem.style.justifyItems = "center";
-    this.elem.style.alignItems = "center";
+  initialCells() {
+    return Array(Grid.HEIGHT).fill(null).map(() => Array(Grid.WIDTH).fill(null).map(() => new _cell.default(this.elem)));
   }
 
   draw() {
@@ -517,6 +529,30 @@ class Grid {
   tick() {
     this.currentTetrimino.moveDown();
     this.draw();
+  }
+
+  onKeyDown(e) {
+    switch (e.key) {
+      case "ArrowLeft":
+        this.currentTetrimino.moveLeft();
+        this.draw();
+        break;
+
+      case "ArrowRight":
+        this.currentTetrimino.moveRight();
+        this.draw();
+        break;
+
+      case "d":
+        this.currentTetrimino.rotateClockwise();
+        this.draw();
+        break;
+
+      case "s":
+        this.currentTetrimino.rotateCounterClockwise();
+        this.draw();
+        break;
+    }
   }
 
 }
@@ -534,25 +570,31 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 const FILLED_COLOR = "#000000";
 const EMPTY_COLOR = "#E0E0E0";
 
 class CellOuter {
   constructor(parentElem) {
-    this.elem = document.createElement("li");
+    _defineProperty(this, "elem", this.initialElem());
+
+    _defineProperty(this, "inner", new CellInner(this.elem));
+
     parentElem.appendChild(this.elem);
-    this.setInitialStyles();
-    this.inner = new CellInner(this.elem);
   }
 
-  setInitialStyles() {
-    this.elem.style.listStyle = "none";
-    this.elem.style.width = "78%";
-    this.elem.style.height = "78%";
-    this.elem.style.border = "2px solid";
-    this.elem.style.display = "flex";
-    this.elem.style.justifyContent = "center";
-    this.elem.style.alignItems = "center";
+  initialElem() {
+    const elem = document.createElement("li");
+    elem.style.listStyle = "none";
+    elem.style.width = "78%";
+    elem.style.height = "78%";
+    elem.style.border = "2px solid";
+    elem.style.display = "flex";
+    elem.style.justifyContent = "center";
+    elem.style.alignItems = "center";
+    return elem;
   }
 
   fill() {
@@ -598,12 +640,16 @@ exports.default = void 0;
 
 var _position = require("./position");
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 const tRelativePositions = [new _position.RelativePosition(0, 0), new _position.RelativePosition(-1, 0), new _position.RelativePosition(1, 0), new _position.RelativePosition(0, 1)];
 
 class Tetrimino {
-  constructor() {
-    this.centerPosition = new _position.AbsolutePosition(5, 15);
+  constructor(maxX) {
+    _defineProperty(this, "centerPosition", new _position.AbsolutePosition(5, 15));
+
     this.occupiedRelativePositions = tRelativePositions;
+    this.maxX = maxX;
   }
 
   occupiedAbsolutePositions() {
@@ -611,12 +657,49 @@ class Tetrimino {
   }
 
   moveDown() {
-    if (!this.canMoveDown()) return;
-    this.centerPosition.y -= 1;
+    this.move(new _position.RelativePosition(0, -1));
   }
 
-  canMoveDown() {
-    return this.occupiedAbsolutePositions().every(occupiedAbsolutePosition => 0 < occupiedAbsolutePosition.y);
+  moveLeft() {
+    this.move(new _position.RelativePosition(-1, 0));
+  }
+
+  moveRight() {
+    this.move(new _position.RelativePosition(1, 0));
+  }
+
+  move(vector) {
+    const nextCenterPosition = this.centerPosition.getAbsolute(vector);
+
+    if (this.canMoveTo(nextCenterPosition)) {
+      this.centerPosition = nextCenterPosition;
+    }
+  }
+
+  canMoveTo(nextCenterPosition) {
+    const nextAbosolutePositions = this.occupiedRelativePositions.map(position => nextCenterPosition.getAbsolute(position));
+    return this.canBeIn(nextAbosolutePositions);
+  }
+
+  rotateClockwise() {
+    this.rotate(position => new _position.RelativePosition(position.y, -position.x));
+  }
+
+  rotateCounterClockwise() {
+    this.rotate(position => new _position.RelativePosition(-position.y, position.x));
+  }
+
+  rotate(rotateFuction) {
+    const nextRelativePositions = this.occupiedRelativePositions.map(rotateFuction);
+    const nextAbsolutePositions = nextRelativePositions.map(position => this.centerPosition.getAbsolute(position));
+
+    if (this.canBeIn(nextAbsolutePositions)) {
+      this.occupiedRelativePositions = nextRelativePositions;
+    }
+  }
+
+  canBeIn(nextOccupiedAbsolutePositions) {
+    return nextOccupiedAbsolutePositions.every(position => 0 <= position.x && position.x <= this.maxX && 0 <= position.y);
   }
 
 }
