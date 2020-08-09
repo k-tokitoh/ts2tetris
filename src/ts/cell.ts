@@ -2,14 +2,16 @@ const FILLED_COLOR = "#000000";
 const EMPTY_COLOR = "#E0E0E0";
 
 class CellOuter {
-  elem: HTMLElement = this.initialElem();
-  inner: CellInner = new CellInner(this.elem);
+  elem: HTMLElement;
+  inner: CellInner;
 
   constructor(parentElem) {
+    this.elem = this.initialElem();
+    this.inner = new CellInner(this.elem);
     parentElem.appendChild(this.elem);
   }
 
-  initialElem(): HTMLElement {
+  initialElem = (): HTMLElement => {
     const elem = document.createElement("li");
     elem.style.listStyle = "none";
     elem.style.width = "78%";
@@ -19,17 +21,17 @@ class CellOuter {
     elem.style.justifyContent = "center";
     elem.style.alignItems = "center";
     return elem;
-  }
+  };
 
-  fill() {
+  fill = () => {
     this.elem.style.borderColor = FILLED_COLOR;
     this.inner.fill();
-  }
+  };
 
-  clear() {
+  clear = () => {
     this.elem.style.borderColor = EMPTY_COLOR;
     this.inner.clear();
-  }
+  };
 }
 
 class CellInner {
@@ -44,13 +46,13 @@ class CellInner {
     this.elem.style.backgroundColor = EMPTY_COLOR;
   }
 
-  fill() {
+  fill = () => {
     this.elem.style.backgroundColor = FILLED_COLOR;
-  }
+  };
 
-  clear() {
+  clear = () => {
     this.elem.style.backgroundColor = EMPTY_COLOR;
-  }
+  };
 }
 
 export default CellOuter;

@@ -8,13 +8,13 @@ class App {
     this.prepareGame();
   }
 
-  prepareGame() {
+  prepareGame = () => {
     this.game = null;
     document.addEventListener("keypress", () => {
       if (this.game) return;
       this.game = new Game(this.elem);
     });
-  }
+  };
 }
 
 export default App;

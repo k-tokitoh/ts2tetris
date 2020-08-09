@@ -1,82 +1,246 @@
-import { AbsolutePosition, RelativePosition } from "./position";
+import Position from "./position";
+import Grid from "./grid";
 
-const tRelativePositions = [
-  new RelativePosition(0, 0),
-  new RelativePosition(-1, 0),
-  new RelativePosition(1, 0),
-  new RelativePosition(0, 1),
-];
+type Pattern = number[][];
+
+type Shape = {
+  patterns: Pattern[];
+};
+
+const shapeT: Shape = {
+  patterns: [
+    [
+      [0, 0, 0, 0],
+      [0, 0, 1, 0],
+      [0, 1, 1, 1],
+      [0, 0, 0, 0],
+    ],
+    [
+      [0, 0, 0, 0],
+      [0, 0, 1, 0],
+      [0, 0, 1, 1],
+      [0, 0, 1, 0],
+    ],
+    [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 1, 1, 1],
+      [0, 0, 1, 0],
+    ],
+    [
+      [0, 0, 0, 0],
+      [0, 0, 1, 0],
+      [0, 1, 1, 0],
+      [0, 0, 1, 0],
+    ],
+  ],
+};
+
+const shapeI: Shape = {
+  patterns: [
+    [
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [1, 1, 1, 1],
+      [0, 0, 0, 0],
+    ],
+    [
+      [0, 1, 0, 0],
+      [0, 1, 0, 0],
+      [0, 1, 0, 0],
+      [0, 1, 0, 0],
+    ],
+  ],
+};
+
+const shapeO: Shape = {
+  patterns: [
+    [
+      [0, 0, 0, 0],
+      [0, 1, 1, 0],
+      [0, 1, 1, 0],
+      [0, 0, 0, 0],
+    ],
+  ],
+};
+
+const shapeS: Shape = {
+  patterns: [
+    [
+      [0, 0, 0, 0],
+      [0, 0, 1, 1],
+      [0, 1, 1, 0],
+      [0, 0, 0, 0],
+    ],
+    [
+      [0, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 1, 1, 0],
+      [0, 0, 1, 0],
+    ],
+  ],
+};
+
+const shapeZ: Shape = {
+  patterns: [
+    [
+      [0, 0, 0, 0],
+      [1, 1, 0, 0],
+      [0, 1, 1, 0],
+      [0, 0, 0, 0],
+    ],
+    [
+      [0, 0, 0, 0],
+      [0, 0, 1, 0],
+      [0, 1, 1, 0],
+      [0, 1, 0, 0],
+    ],
+  ],
+};
+
+const shapeL: Shape = {
+  patterns: [
+    [
+      [0, 0, 0, 0],
+      [0, 0, 1, 0],
+      [1, 1, 1, 0],
+      [0, 0, 0, 0],
+    ],
+    [
+      [1, 0, 0, 0],
+      [1, 0, 0, 0],
+      [1, 1, 0, 0],
+      [0, 0, 0, 0],
+    ],
+    [
+      [0, 0, 0, 0],
+      [1, 1, 1, 0],
+      [1, 0, 0, 0],
+      [0, 0, 0, 0],
+    ],
+    [
+      [0, 0, 0, 0],
+      [0, 1, 1, 0],
+      [0, 0, 1, 0],
+      [0, 0, 1, 0],
+    ],
+  ],
+};
+
+const shapeJ: Shape = {
+  patterns: [
+    [
+      [0, 0, 0, 0],
+      [0, 1, 0, 0],
+      [0, 1, 1, 1],
+      [0, 0, 0, 0],
+    ],
+    [
+      [0, 0, 0, 0],
+      [0, 1, 1, 0],
+      [0, 1, 0, 0],
+      [0, 1, 0, 0],
+    ],
+    [
+      [0, 0, 0, 0],
+      [0, 1, 1, 1],
+      [0, 0, 0, 1],
+      [0, 0, 0, 0],
+    ],
+    [
+      [0, 0, 0, 1],
+      [0, 0, 0, 1],
+      [0, 0, 1, 1],
+      [0, 0, 0, 0],
+    ],
+  ],
+};
+
+const shapes = [shapeT, shapeI, shapeO, shapeZ, shapeS, shapeL, shapeJ];
 
 class Tetrimino {
-  centerPosition: AbsolutePosition = new AbsolutePosition(5, 15);
-  occupiedRelativePositions: RelativePosition[];
-  maxX: number;
+  position: Position;
+  patternIndex: number = 0;
+  grid: Grid;
+  shape: Shape;
 
-  constructor(maxX) {
-    this.occupiedRelativePositions = tRelativePositions;
-    this.maxX = maxX;
-  }
-
-  occupiedAbsolutePositions() {
-    return this.occupiedRelativePositions.map((relativePosition) =>
-      this.centerPosition.getAbsolute(relativePosition)
+  constructor(grid) {
+    this.shape = shapes[Math.floor(Math.random() * shapes.length)];
+    this.position = new Position(
+      (grid.area.width - this.shape.patterns[0].length) / 2,
+      grid.area.height - this.shape.patterns[0].length / 2
     );
+    this.grid = grid;
   }
 
-  moveDown(): void {
-    this.move(new RelativePosition(0, -1));
-  }
+  currentPattern = (): Pattern => {
+    return this.shape.patterns[this.patternIndex];
+  };
 
-  moveLeft(): void {
-    this.move(new RelativePosition(-1, 0));
-  }
+  occupiedPositions = (): Position[] => {
+    const positions: Position[] = [];
+    this.currentPattern().forEach((row, i) =>
+      row.forEach((cell, j) => {
+        if (cell == 1)
+          positions.push(
+            new Position(this.position.x + j, this.position.y + (3 - i))
+          );
+      })
+    );
+    return positions;
+  };
 
-  moveRight(): void {
-    this.move(new RelativePosition(1, 0));
-  }
+  moveDown = (): boolean => {
+    return this.move(
+      () => (this.position = this.position.down()),
+      () => (this.position = this.position.up())
+    );
+  };
 
-  move(vector: RelativePosition): void {
-    const nextCenterPosition = this.centerPosition.getAbsolute(vector);
-    if (this.canMoveTo(nextCenterPosition)) {
-      this.centerPosition = nextCenterPosition;
+  moveRight = (): boolean => {
+    return this.move(
+      () => (this.position = this.position.right()),
+      () => (this.position = this.position.left())
+    );
+  };
+
+  moveLeft = (): boolean => {
+    return this.move(
+      () => (this.position = this.position.left()),
+      () => (this.position = this.position.right())
+    );
+  };
+
+  rotateClockwise = (): boolean => {
+    return this.move(this.incrementPatternIndex, this.decrementPatternIndex);
+  };
+
+  rotateCounterClockwise = (): boolean => {
+    return this.move(this.decrementPatternIndex, this.incrementPatternIndex);
+  };
+
+  incrementPatternIndex = (): void => {
+    this.patternIndex = (this.patternIndex + 1) % this.shape.patterns.length;
+  };
+
+  decrementPatternIndex = (): void => {
+    this.patternIndex =
+      (this.patternIndex + this.shape.patterns.length - 1) %
+      this.shape.patterns.length;
+  };
+
+  move = (attempt: () => void, reset: () => void): boolean => {
+    attempt();
+    if (!this.canBeIn(this.occupiedPositions())) {
+      reset();
+      return false;
     }
-  }
+    return true;
+  };
 
-  canMoveTo(nextCenterPosition: AbsolutePosition): boolean {
-    const nextAbosolutePositions = this.occupiedRelativePositions.map(
-      (position) => nextCenterPosition.getAbsolute(position)
-    );
-    return this.canBeIn(nextAbosolutePositions);
-  }
-
-  rotateClockwise(): void {
-    this.rotate((position) => new RelativePosition(position.y, -position.x));
-  }
-
-  rotateCounterClockwise(): void {
-    this.rotate((position) => new RelativePosition(-position.y, position.x));
-  }
-
-  rotate(
-    rotateFuction: (position: RelativePosition) => RelativePosition
-  ): void {
-    const nextRelativePositions = this.occupiedRelativePositions.map(
-      rotateFuction
-    );
-    const nextAbsolutePositions = nextRelativePositions.map((position) =>
-      this.centerPosition.getAbsolute(position)
-    );
-    if (this.canBeIn(nextAbsolutePositions)) {
-      this.occupiedRelativePositions = nextRelativePositions;
-    }
-  }
-
-  canBeIn(nextOccupiedAbsolutePositions: AbsolutePosition[]): boolean {
-    return nextOccupiedAbsolutePositions.every(
-      (position) =>
-        0 <= position.x && position.x <= this.maxX && 0 <= position.y
-    );
-  }
+  canBeIn = (positions: Position[]): boolean => {
+    return positions.every(this.grid.occupiable);
+  };
 }
 
 export default Tetrimino;

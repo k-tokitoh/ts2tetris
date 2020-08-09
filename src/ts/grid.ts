@@ -1,74 +1,95 @@
 import Cell from "./cell";
 import Tetrimino from "./tetrimino";
+import Position from "./position";
+import Area from "./area";
 
 class Grid {
-  static HEIGHT = 20;
-  static WIDTH = 10;
-
-  elem: HTMLElement = this.initialElem();
-  cells: Cell[][] = this.initialCells();
-  currentTetrimino: Tetrimino = new Tetrimino(Grid.WIDTH - 1);
+  area: Area = new Area(20, 10);
+  elem: HTMLElement;
+  cells: Cell[][];
+  currentTetrimino: Tetrimino = new Tetrimino(this);
+  sediment: Position[] = [];
 
   constructor(parentElem) {
+    this.elem = this.initialElem(this.area);
+    this.cells = this.initialCells(this.area);
     parentElem.appendChild(this.elem);
     this.draw();
-    document.addEventListener("keydown", (e) => this.onKeyDown(e));
   }
 
-  initialElem(): HTMLElement {
+  initialElem = (area: Area): HTMLElement => {
     const elem = document.createElement("ul");
     elem.style.display = "grid";
-    elem.style.gridTemplateColumns = `repeat(${Grid.WIDTH}, 32px)`;
-    elem.style.gridTemplateRows = `repeat(${Grid.HEIGHT}, 32px)`;
+    elem.style.gridTemplateColumns = `repeat(${area.width}, 32px)`;
+    elem.style.gridTemplateRows = `repeat(${area.height}, 32px)`;
     elem.style.justifyItems = "center";
     elem.style.alignItems = "center";
     return elem;
-  }
+  };
 
-  initialCells(): Cell[][] {
-    return Array(Grid.HEIGHT)
+  initialCells = (area: Area): Cell[][] => {
+    return Array(area.height)
       .fill(null)
       .map(() =>
-        Array(Grid.WIDTH)
+        Array(area.width)
           .fill(null)
           .map(() => new Cell(this.elem))
       );
-  }
+  };
 
-  draw() {
+  draw = (): void => {
     this.cells.forEach((cellsRow) => cellsRow.forEach((cell) => cell.clear()));
     this.currentTetrimino
-      .occupiedAbsolutePositions()
-      .forEach((position) =>
-        this.cells[Grid.HEIGHT - 1 - position.y][position.x].fill()
-      );
-  }
+      .occupiedPositions()
+      .concat(this.sediment)
+      .forEach((position) => {
+        if (this.within(position)) {
+          this.cells[this.area.height - 1 - position.y][position.x].fill();
+        }
+      });
+  };
 
-  tick(): void {
-    this.currentTetrimino.moveDown();
-    this.draw();
-  }
-
-  onKeyDown(e: KeyboardEvent): void {
-    switch (e.key) {
-      case "ArrowLeft":
-        this.currentTetrimino.moveLeft();
-        this.draw();
-        break;
-      case "ArrowRight":
-        this.currentTetrimino.moveRight();
-        this.draw();
-        break;
-      case "d":
-        this.currentTetrimino.rotateClockwise();
-        this.draw();
-        break;
-      case "s":
-        this.currentTetrimino.rotateCounterClockwise();
-        this.draw();
-        break;
+  tick = (): void => {
+    if (!this.currentTetrimino.moveDown()) {
+      this.sediment.push(...this.currentTetrimino.occupiedPositions());
+      this.currentTetrimino = new Tetrimino(this);
     }
-  }
+    this.draw();
+  };
+
+  occupiable = (position: Position): boolean => {
+    return (
+      this.within(position) &&
+      this.sediment.every(
+        (PieceOfSediment) => !PieceOfSediment.equals(position)
+      )
+    );
+  };
+
+  within = (position: Position): boolean => {
+    return (
+      0 <= position.x &&
+      position.x <= this.area.width - 1 &&
+      0 <= position.y &&
+      position.y <= this.area.height - 1
+    );
+  };
+
+  moveTetriminoLeft = () => {
+    this.currentTetrimino.moveLeft();
+  };
+
+  moveTetriminoRight = () => {
+    this.currentTetrimino.moveRight();
+  };
+
+  rotateTetriminoClockwise = () => {
+    this.currentTetrimino.rotateClockwise();
+  };
+
+  rotateTetriminoCounterClockwise = () => {
+    this.currentTetrimino.rotateCounterClockwise();
+  };
 }
 
 export default Grid;
