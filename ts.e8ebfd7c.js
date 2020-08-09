@@ -410,12 +410,12 @@ function hmrAcceptRun(bundle, id) {
 },{}],"1b4b89b226e7f55d440fa57f9fc4860c":[function(require,module,exports) {
 "use strict";
 
-var _app = _interopRequireDefault(require("./app"));
+var _appView = _interopRequireDefault(require("./views/appView"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-window.onload = () => new _app.default();
-},{"./app":"edd0615a324f2db2daa34e56ad96feee"}],"edd0615a324f2db2daa34e56ad96feee":[function(require,module,exports) {
+window.onload = () => new _appView.default();
+},{"./views/appView":"c7afdcca3d6a4d4004dfdc496a19cef4"}],"c7afdcca3d6a4d4004dfdc496a19cef4":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -423,32 +423,27 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _game = _interopRequireDefault(require("./game"));
+var _gameView = _interopRequireDefault(require("./gameView"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-class App {
+class AppView {
   constructor() {
     _defineProperty(this, "elem", document.getElementById("app"));
 
-    this.prepareGame();
-  }
-
-  prepareGame() {
-    this.game = null;
     document.addEventListener("keypress", () => {
-      if (this.game) return;
-      this.game = new _game.default(this.elem);
+      if (this.gameView) return;
+      this.gameView = new _gameView.default(this);
     });
   }
 
 }
 
-var _default = App;
+var _default = AppView;
 exports.default = _default;
-},{"./game":"33bf8ba056748770c85d4efe95236492"}],"33bf8ba056748770c85d4efe95236492":[function(require,module,exports) {
+},{"./gameView":"5b79214a41f8f26a3b969dc6163363b7"}],"5b79214a41f8f26a3b969dc6163363b7":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -456,29 +451,26 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _grid = _interopRequireDefault(require("./grid"));
+var _gridView = _interopRequireDefault(require("./gridView"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-class Game {
-  constructor(parentElem) {
+class GameView {
+  constructor(parentView) {
     _defineProperty(this, "elem", document.createElement("div"));
 
-    _defineProperty(this, "grid", new _grid.default(this.elem));
+    _defineProperty(this, "gridView", new _gridView.default(this));
 
-    parentElem.appendChild(this.elem);
-    setInterval(() => {
-      this.grid.tick();
-    }, 500);
+    parentView.elem.appendChild(this.elem);
   }
 
 }
 
-var _default = Game;
+var _default = GameView;
 exports.default = _default;
-},{"./grid":"ba3e94b73492c1639d51f8611b895965"}],"ba3e94b73492c1639d51f8611b895965":[function(require,module,exports) {
+},{"./gridView":"565af72446ef9cdaf45c1bda46c8ad1e"}],"565af72446ef9cdaf45c1bda46c8ad1e":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -486,7 +478,81 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _cell = _interopRequireDefault(require("./cell"));
+var _grid = _interopRequireDefault(require("../models/grid"));
+
+var _cellView = _interopRequireDefault(require("./cellView"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+class GridView {
+  constructor(parentView) {
+    _defineProperty(this, "model", new _grid.default(this.draw.bind(this)));
+
+    _defineProperty(this, "elem", this.initialElem());
+
+    _defineProperty(this, "cellViews", this.initialCellViews());
+
+    parentView.elem.appendChild(this.elem);
+    this.draw();
+    document.addEventListener("keydown", e => this.onKeyDown(e));
+  }
+
+  initialElem() {
+    const elem = document.createElement("ul");
+    elem.style.display = "grid";
+    elem.style.gridTemplateColumns = `repeat(${_grid.default.WIDTH}, 32px)`;
+    elem.style.gridTemplateRows = `repeat(${_grid.default.HEIGHT}, 32px)`;
+    elem.style.justifyItems = "center";
+    elem.style.alignItems = "center";
+    return elem;
+  }
+
+  initialCellViews() {
+    return Array(_grid.default.HEIGHT).fill(null).map(() => Array(_grid.default.WIDTH).fill(null).map(() => new _cellView.default(this)));
+  }
+
+  draw() {
+    this.cellViews.forEach(cellsRow => cellsRow.forEach(cell => cell.clear()));
+    this.model.currentTetrimino.occupiedAbsolutePositions().forEach(position => this.cellViews[_grid.default.HEIGHT - 1 - position.y][position.x].fill());
+  }
+
+  onKeyDown(e) {
+    switch (e.key) {
+      case "ArrowLeft":
+        this.model.currentTetrimino.moveLeft();
+        this.draw();
+        break;
+
+      case "ArrowRight":
+        this.model.currentTetrimino.moveRight();
+        this.draw();
+        break;
+
+      case "d":
+        this.model.currentTetrimino.rotateClockwise();
+        this.draw();
+        break;
+
+      case "s":
+        this.model.currentTetrimino.rotateCounterClockwise();
+        this.draw();
+        break;
+    }
+  }
+
+}
+
+var _default = GridView;
+exports.default = _default;
+},{"../models/grid":"7647825bc86bcd64559b2a589f0cc128","./cellView":"d53d46a01b20caa5b3558eb3265a47be"}],"7647825bc86bcd64559b2a589f0cc128":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
 
 var _tetrimino = _interopRequireDefault(require("./tetrimino"));
 
@@ -495,64 +561,21 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 class Grid {
-  constructor(parentElem) {
-    _defineProperty(this, "elem", this.initialElem());
+  constructor(updateView) {
+    _defineProperty(this, "currentTetrimino", new _tetrimino.default(this.inGrid.bind(this)));
 
-    _defineProperty(this, "cells", this.initialCells());
-
-    _defineProperty(this, "currentTetrimino", new _tetrimino.default(Grid.WIDTH - 1));
-
-    parentElem.appendChild(this.elem);
-    this.draw();
-    document.addEventListener("keydown", e => this.onKeyDown(e));
+    setInterval(() => {
+      this.tick(updateView);
+    }, 500);
   }
 
-  initialElem() {
-    const elem = document.createElement("ul");
-    elem.style.display = "grid";
-    elem.style.gridTemplateColumns = `repeat(${Grid.WIDTH}, 32px)`;
-    elem.style.gridTemplateRows = `repeat(${Grid.HEIGHT}, 32px)`;
-    elem.style.justifyItems = "center";
-    elem.style.alignItems = "center";
-    return elem;
-  }
-
-  initialCells() {
-    return Array(Grid.HEIGHT).fill(null).map(() => Array(Grid.WIDTH).fill(null).map(() => new _cell.default(this.elem)));
-  }
-
-  draw() {
-    this.cells.forEach(cellsRow => cellsRow.forEach(cell => cell.clear()));
-    this.currentTetrimino.occupiedAbsolutePositions().forEach(position => this.cells[Grid.HEIGHT - 1 - position.y][position.x].fill());
-  }
-
-  tick() {
+  tick(updateView) {
     this.currentTetrimino.moveDown();
-    this.draw();
+    updateView();
   }
 
-  onKeyDown(e) {
-    switch (e.key) {
-      case "ArrowLeft":
-        this.currentTetrimino.moveLeft();
-        this.draw();
-        break;
-
-      case "ArrowRight":
-        this.currentTetrimino.moveRight();
-        this.draw();
-        break;
-
-      case "d":
-        this.currentTetrimino.rotateClockwise();
-        this.draw();
-        break;
-
-      case "s":
-        this.currentTetrimino.rotateCounterClockwise();
-        this.draw();
-        break;
-    }
+  inGrid(position) {
+    return 0 <= position.x && position.x <= Grid.WIDTH - 1 && 0 <= position.y;
   }
 
 }
@@ -563,74 +586,7 @@ _defineProperty(Grid, "WIDTH", 10);
 
 var _default = Grid;
 exports.default = _default;
-},{"./cell":"b70b289d34d20a81da4fb8dad7a40876","./tetrimino":"f75ed70044904b7f08eae709cbe41b61"}],"b70b289d34d20a81da4fb8dad7a40876":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-const FILLED_COLOR = "#000000";
-const EMPTY_COLOR = "#E0E0E0";
-
-class CellOuter {
-  constructor(parentElem) {
-    _defineProperty(this, "elem", this.initialElem());
-
-    _defineProperty(this, "inner", new CellInner(this.elem));
-
-    parentElem.appendChild(this.elem);
-  }
-
-  initialElem() {
-    const elem = document.createElement("li");
-    elem.style.listStyle = "none";
-    elem.style.width = "78%";
-    elem.style.height = "78%";
-    elem.style.border = "2px solid";
-    elem.style.display = "flex";
-    elem.style.justifyContent = "center";
-    elem.style.alignItems = "center";
-    return elem;
-  }
-
-  fill() {
-    this.elem.style.borderColor = FILLED_COLOR;
-    this.inner.fill();
-  }
-
-  clear() {
-    this.elem.style.borderColor = EMPTY_COLOR;
-    this.inner.clear();
-  }
-
-}
-
-class CellInner {
-  constructor(parentElem) {
-    this.elem = document.createElement("div");
-    parentElem.appendChild(this.elem);
-    this.elem.style.width = "75%";
-    this.elem.style.height = "75%";
-    this.elem.style.backgroundColor = EMPTY_COLOR;
-  }
-
-  fill() {
-    this.elem.style.backgroundColor = FILLED_COLOR;
-  }
-
-  clear() {
-    this.elem.style.backgroundColor = EMPTY_COLOR;
-  }
-
-}
-
-var _default = CellOuter;
-exports.default = _default;
-},{}],"f75ed70044904b7f08eae709cbe41b61":[function(require,module,exports) {
+},{"./tetrimino":"26ad3baa1836ca50e03e4c55252637dd"}],"26ad3baa1836ca50e03e4c55252637dd":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -645,11 +601,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 const tRelativePositions = [new _position.RelativePosition(0, 0), new _position.RelativePosition(-1, 0), new _position.RelativePosition(1, 0), new _position.RelativePosition(0, 1)];
 
 class Tetrimino {
-  constructor(maxX) {
+  constructor(inGrid) {
     _defineProperty(this, "centerPosition", new _position.AbsolutePosition(5, 15));
 
     this.occupiedRelativePositions = tRelativePositions;
-    this.maxX = maxX;
+    this.inGrid = inGrid;
   }
 
   occupiedAbsolutePositions() {
@@ -699,14 +655,14 @@ class Tetrimino {
   }
 
   canBeIn(nextOccupiedAbsolutePositions) {
-    return nextOccupiedAbsolutePositions.every(position => 0 <= position.x && position.x <= this.maxX && 0 <= position.y);
+    return nextOccupiedAbsolutePositions.every(this.inGrid);
   }
 
 }
 
 var _default = Tetrimino;
 exports.default = _default;
-},{"./position":"471495f57cb7c4ce0f9427dac5bec78c"}],"471495f57cb7c4ce0f9427dac5bec78c":[function(require,module,exports) {
+},{"./position":"051c5f2b0879b2bda3be9afd48439570"}],"051c5f2b0879b2bda3be9afd48439570":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -734,6 +690,73 @@ exports.AbsolutePosition = AbsolutePosition;
 class RelativePosition extends Position {}
 
 exports.RelativePosition = RelativePosition;
+},{}],"d53d46a01b20caa5b3558eb3265a47be":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+const FILLED_COLOR = "#000000";
+const EMPTY_COLOR = "#E0E0E0";
+
+class OuterCellView {
+  constructor(parentView) {
+    _defineProperty(this, "elem", this.initialElem());
+
+    _defineProperty(this, "innerCellView", new InnerCellView(this));
+
+    parentView.elem.appendChild(this.elem);
+  }
+
+  initialElem() {
+    const elem = document.createElement("li");
+    elem.style.listStyle = "none";
+    elem.style.width = "78%";
+    elem.style.height = "78%";
+    elem.style.border = "2px solid";
+    elem.style.display = "flex";
+    elem.style.justifyContent = "center";
+    elem.style.alignItems = "center";
+    return elem;
+  }
+
+  fill() {
+    this.elem.style.borderColor = FILLED_COLOR;
+    this.innerCellView.fill();
+  }
+
+  clear() {
+    this.elem.style.borderColor = EMPTY_COLOR;
+    this.innerCellView.clear();
+  }
+
+}
+
+class InnerCellView {
+  constructor(parentView) {
+    this.elem = document.createElement("div");
+    parentView.elem.appendChild(this.elem);
+    this.elem.style.width = "75%";
+    this.elem.style.height = "75%";
+    this.elem.style.backgroundColor = EMPTY_COLOR;
+  }
+
+  fill() {
+    this.elem.style.backgroundColor = FILLED_COLOR;
+  }
+
+  clear() {
+    this.elem.style.backgroundColor = EMPTY_COLOR;
+  }
+
+}
+
+var _default = OuterCellView;
+exports.default = _default;
 },{}]},{},["d51b7545ee38d2d3f793c729451fb2f3","1b4b89b226e7f55d440fa57f9fc4860c"], null)
 
 //# sourceMappingURL=ts.e8ebfd7c.js.map
