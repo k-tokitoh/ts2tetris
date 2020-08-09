@@ -2,10 +2,9 @@ import Game from "./game";
 
 class App {
   game: Game | null;
-  elem: HTMLElement;
+  elem: HTMLElement = document.getElementById("app");
 
   constructor() {
-    this.elem = document.getElementById("app");
     this.prepareGame();
   }
 

@@ -1,14 +1,11 @@
 import Grid from "./grid";
 
 class Game {
-  elem: HTMLElement;
-  grid: Grid;
+  elem: HTMLElement = document.createElement("div");
+  grid: Grid = new Grid(this.elem);
 
   constructor(parentElem) {
-    this.elem = document.createElement("div");
     parentElem.appendChild(this.elem);
-
-    this.grid = new Grid(this.elem);
 
     setInterval(() => {
       this.grid.tick();

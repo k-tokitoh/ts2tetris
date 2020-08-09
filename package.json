@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "parcel serve src/index.html",
-    "predeploy": "parcel build src/index.html --public-url /ts2tetris/",
+    "predeploy": "parcel build src/index.html --no-cache --public-url /ts2tetris/",
     "deploy": "gh-pages -d dist"
   },
   "devDependencies": {

@@ -2,24 +2,23 @@ const FILLED_COLOR = "#000000";
 const EMPTY_COLOR = "#E0E0E0";
 
 class CellOuter {
-  elem: HTMLElement;
-  inner: CellInner;
+  elem: HTMLElement = this.initialElem();
+  inner: CellInner = new CellInner(this.elem);
 
   constructor(parentElem) {
-    this.elem = document.createElement("li");
     parentElem.appendChild(this.elem);
-    this.setInitialStyles();
-    this.inner = new CellInner(this.elem);
   }
 
-  setInitialStyles() {
-    this.elem.style.listStyle = "none";
-    this.elem.style.width = "78%";
-    this.elem.style.height = "78%";
-    this.elem.style.border = "2px solid";
-    this.elem.style.display = "flex";
-    this.elem.style.justifyContent = "center";
-    this.elem.style.alignItems = "center";
+  initialElem(): HTMLElement {
+    const elem = document.createElement("li");
+    elem.style.listStyle = "none";
+    elem.style.width = "78%";
+    elem.style.height = "78%";
+    elem.style.border = "2px solid";
+    elem.style.display = "flex";
+    elem.style.justifyContent = "center";
+    elem.style.alignItems = "center";
+    return elem;
   }
 
   fill() {
