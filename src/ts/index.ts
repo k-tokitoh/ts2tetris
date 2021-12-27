@@ -1,3 +1,6 @@
+import { Matrix, Vector } from "./matrix";
+import { Tetromino, LTetromino, OTetromino } from "./tetromino";
+
 const main = () => {
   const canvas = document.getElementById("canvas") as HTMLCanvasElement;
   const ctx = canvas.getContext("2d");
@@ -11,144 +14,134 @@ const main = () => {
 
 window.onload = () => main();
 
-type Cells = boolean[][];
-
-type CellValue = 0 | 1;
-
-class Matrix {
-  constructor(cell_values: CellValue[][]) {
-    this._cells = cell_values.map((row, y) =>
-      row.map((value, x) => new Cell(new Vector(x, y), value))
-    );
-  }
-
-  private _cells: Cell[][];
-
-  get cells() {
-    return this._cells.flat();
-  }
-
-  at(vector: Vector) {
-    return this._cells[vector.y][vector.x];
-  }
-}
-
-class Cell {
-  constructor(public readonly vector: Vector, public value: CellValue) {}
-}
-
-class Vector {
-  constructor(public x: number, public y: number) {}
-
-  add(other: Vector) {
-    return new Vector(this.x + other.x, this.y + other.y);
-  }
-}
-
 class Board {
   constructor(private readonly _ctx: CanvasRenderingContext2D) {
-    this._matrix = new Matrix(
-      new Array(23).fill(null).map((_) => Array(14).fill(false))
-    );
-    const tetriminoClasses = [LTetromino, OTetromino];
-    const tetriminoClass =
-      tetriminoClasses[Math.floor(Math.random() * tetriminoClasses.length)];
-    // const tetriminoClass = LTetromino;
-    this.current = {
-      tetromino: new tetriminoClass(),
+    this._backgroundLayer = this.getBaseMatrix();
+    this._currentLayer = this.getBaseMatrix();
+    this.current = this.resetCurrent();
+    document.addEventListener("keydown", (e) => this.onKeyDown(e));
+  }
+
+  private _backgroundLayer: Matrix;
+  private _currentLayer: Matrix;
+  private current: { tetromino: Tetromino; offset: Vector };
+
+  private getBaseMatrix = () =>
+    new Matrix([
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      /////////////  VISIBLE BELOW  /////////////
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    ]);
+
+  private resetCurrent() {
+    const tetrominoClasses = [LTetromino, OTetromino];
+    const tetrominoClass =
+      tetrominoClasses[Math.floor(Math.random() * tetrominoClasses.length)];
+    // const tetrominoClass = LTetromino;
+    return {
+      tetromino: new tetrominoClass(),
       offset: new Vector(5, 0),
     };
   }
 
-  private _matrix: Matrix;
-
-  private current: { tetromino: Tetromino; offset: Vector };
-
-  tick = () => {
-    this.current.tetromino.posture.cells
-      .filter((cell) => cell.value)
-      .forEach((cell) => {
-        this._matrix.at(this.current.offset.add(cell.vector)).value = 0;
-      });
-
-    this.current.offset.y += 1;
-
-    this.current.tetromino.posture.cells
-      .filter((cell) => cell.value)
-      .forEach((cell) => {
-        console.log(this.current.offset);
-        console.log(cell.vector);
-        this._matrix.at(this.current.offset.add(cell.vector)).value = 1;
-      });
+  private onKeyDown = (e: KeyboardEvent): void => {
+    const vector = (() => {
+      switch (e.key) {
+        case "ArrowRight":
+          return new Vector(1, 0);
+        case "ArrowLeft":
+          return new Vector(-1, 0);
+      }
+    })();
+    if (!vector) return;
+    this.move({ vector: vector });
     this.draw();
   };
 
+  tick = () => {
+    this.move({
+      vector: new Vector(0, 1),
+      onCollision: () => {
+        this._currentLayer.cells
+          .filter((cell) => cell.value)
+          .forEach((cell) => (this._backgroundLayer.at(cell.vector).value = 1));
+        this._currentLayer = this.getBaseMatrix();
+        this.current = this.resetCurrent();
+      },
+    });
+    this.draw();
+  };
+
+  private move({
+    vector,
+    onCollision = () => {},
+  }: {
+    vector: Vector;
+    onCollision?: () => void;
+  }) {
+    if (this.collisionDetected(vector)) {
+      onCollision();
+      return;
+    }
+
+    this.current.tetromino.posture.cells
+      .filter((cell) => cell.value)
+      .forEach((cell) => {
+        this._currentLayer.at(this.current.offset.add(cell.vector)).value = 0;
+      });
+
+    this.current.offset = this.current.offset.add(vector);
+
+    this.current.tetromino.posture.cells
+      .filter((cell) => cell.value)
+      .forEach((cell) => {
+        this._currentLayer.at(this.current.offset.add(cell.vector)).value = 1;
+      });
+  }
+
+  private collisionDetected(vector: Vector) {
+    return this.current.tetromino.posture.cells
+      .filter((cell) => cell.value)
+      .some(
+        (cell) =>
+          this._backgroundLayer.at(
+            this.current.offset.add(cell.vector).add(vector)
+          ).value
+      );
+  }
+
   private draw() {
-    this._matrix.cells.forEach((cell) => {
-      const vector = cell.vector.add(new Vector(-2, -3));
-      console.log(cell.value);
-      this._ctx.fillStyle = cell.value
-        ? "rgba(0, 0, 0)"
-        : "rgba(224, 224, 224)";
+    this._backgroundLayer.cells.forEach((backgroundCell) => {
+      const currentCell = this._currentLayer.at(backgroundCell.vector);
+      const vector = backgroundCell.vector.add(new Vector(-2, -3));
+      this._ctx.fillStyle =
+        backgroundCell.value || currentCell.value
+          ? "rgba(0, 0, 0)"
+          : "rgba(224, 224, 224)";
       this._ctx.fillRect(vector.x * 40 + 7, vector.y * 40 + 7, 26, 26);
     });
-  }
-}
-
-abstract class Tetromino {
-  constructor() {
-    this.postures = this.getRawPostures().map(
-      (raw_posture) => new Matrix(raw_posture)
-    );
-    this.posture = this.postures[0];
-  }
-
-  postures: Matrix[];
-  posture: Matrix;
-
-  abstract getRawPostures(): CellValue[][][];
-}
-
-class LTetromino extends Tetromino {
-  getRawPostures(): CellValue[][][] {
-    return [
-      [
-        [0, 0, 1, 0],
-        [0, 0, 1, 0],
-        [0, 0, 1, 0],
-        [0, 0, 1, 0],
-      ],
-      [
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-        [1, 1, 1, 1],
-        [0, 0, 0, 0],
-      ],
-      [
-        [0, 1, 0, 0],
-        [0, 1, 0, 0],
-        [0, 1, 0, 0],
-        [0, 1, 0, 0],
-      ],
-      [
-        [0, 0, 0, 0],
-        [1, 1, 1, 1],
-        [0, 0, 0, 0],
-        [0, 0, 0, 0],
-      ],
-    ];
-  }
-}
-
-class OTetromino extends Tetromino {
-  getRawPostures(): CellValue[][][] {
-    return [
-      [
-        [0, 0, 0, 0],
-        [0, 1, 1, 0],
-        [0, 1, 1, 0],
-        [0, 0, 0, 0],
-      ],
-    ];
   }
 }
