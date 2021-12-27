@@ -4,12 +4,26 @@
     <meta charset="utf-8" />
     <title>Tetris</title>
     <link rel="icon" href="./images/favicon.ico" />
-    <script src="./ts/index.ts" charset="utf-8"></script>
+    <script
+      type="application/javascript"
+      src="./ts/index.ts"
+      charset="utf-8"
+    ></script>
   </head>
 
   <body>
     <main>
-      <div id="app"></div>
+      <canvas id="canvas" width="400" height="800"></canvas>
     </main>
   </body>
+  <style>
+    main {
+      display: flex;
+      justify-content: center;
+    }
+
+    canvas {
+      border: solid 1px;
+    }
+  </style>
 </html>

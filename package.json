@@ -2,6 +2,7 @@
   "name": "ts2tetris",
   "version": "0.1.0",
   "private": true,
+  "setup": "npm",
   "scripts": {
     "dev": "parcel serve src/index.html",
     "predeploy": "parcel build src/index.html --no-cache --public-url /ts2tetris/",
